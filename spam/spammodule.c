@@ -8,10 +8,15 @@ static PyObject * spam_system(PyObject * self,PyObject *args){
 	//PyArrayObject* arr = (PyArrayObject*) PyArray_FromAny(args, NULL, 0,0, 
 	//		NPY_ARRAY_IN_ARRAY,NULL);
 	//
-    PyArrayObject *arr = (PyArrayObject *)PyArray_FromAny(args, NULL, 0, 0, NPY_ARRAY_IN_ARRAY, NULL);	
-	for(int i = 0; i < arr->nd; i++){
-		printf("%d\n", arr->dimensions[i]);	
-	}
+    PyArrayObject *arr = (PyArrayObject *)PyArray_FromAny(args, NULL, 0, 0,
+			NPY_ARRAY_IN_ARRAY, NULL);	
+	NpyIter *iter = NpyIter_New(arr,NPY_ITER_READWRITE, NPY_CORDER,
+			NPY_NO_CASTING, NULL);
+	NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
+	int ** dataptr = (int**)NpyIter_GetDataPtrArray(iter);
+	do{
+		printf("%d\n", **dataptr);
+	} while(iternext(iter));
 	return PyLong_FromLong(0);
 }
 

@@ -8,14 +8,23 @@ static PyObject * spam_system(PyObject * self,PyObject *args){
 	//PyArrayObject* arr = (PyArrayObject*) PyArray_FromAny(args, NULL, 0,0, 
 	//		NPY_ARRAY_IN_ARRAY,NULL);
 	//
+	int ** dataptr;
+	npy_intp multi_index[3];
+
     PyArrayObject *arr = (PyArrayObject *)PyArray_FromAny(args, NULL, 0, 0,
 			NPY_ARRAY_IN_ARRAY, NULL);	
-	NpyIter *iter = NpyIter_New(arr,NPY_ITER_READWRITE, NPY_CORDER,
-			NPY_NO_CASTING, NULL);
+	NpyIter *iter = NpyIter_New(arr,NPY_ITER_READONLY | NPY_ITER_MULTI_INDEX |
+			NPY_ITER_REFS_OK , NPY_CORDER, NPY_NO_CASTING, NULL);
 	NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
-	int ** dataptr = (int**)NpyIter_GetDataPtrArray(iter);
+	NpyIter_GetMultiIndexFunc *get_multi_index = 
+		NpyIter_GetGetMultiIndex(iter, NULL);
+
+	dataptr = (int**)NpyIter_GetDataPtrArray(iter);
+
 	do{
-		printf("%d\n", **dataptr);
+		get_multi_index(iter, multi_index);
+		printf("Element[%" NPY_INTP_FMT "][%" NPY_INTP_FMT "] = %d\n", 
+				multi_index[1], multi_index[2],**dataptr);
 	} while(iternext(iter));
 	return PyLong_FromLong(0);
 }

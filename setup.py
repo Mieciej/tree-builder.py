@@ -1,8 +1,8 @@
 from setuptools import setup, Extension
 
 setup(
-    name="spam",
+    name="tree_builder",
     version="1.0",
     description="This is a demo package",
-    ext_modules=[Extension("spam", sources=["spam/spammodule.c"])],
+    ext_modules=[Extension("tree_builder", sources=["tree-builder/tree-buildermodule.cpp"])],
 )

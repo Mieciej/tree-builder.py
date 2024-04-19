@@ -1,7 +1,8 @@
 #define PY_SSIZE_T_CLEAN
 #include <python3.11/Python.h>
+#include <iostream>
 
-static PyObject * spam_system(PyObject * self,PyObject *args){
+static PyObject * tree_build(PyObject * self,PyObject *args){
     PyObject * list, *item, *number; 
     if (!PyArg_ParseTuple(args, "O", &list)) {
         return NULL;
@@ -20,27 +21,27 @@ static PyObject * spam_system(PyObject * self,PyObject *args){
         for ( Py_ssize_t j = 0; j < l; j++){
            number = PyList_GetItem(item, j);
            long t = PyLong_AsLong(number);
-           printf("Element[%ld, %ld] = %ld\n",i,j, t);
+           std::cout << "Element: " << t << std::endl;
         }
     }
     return PyLong_FromLong(0);
 }
 
 
-static PyMethodDef SpamMethods[] = {
-    {"system",spam_system,METH_VARARGS,"Execute a shell command."},
+static PyMethodDef TreeBuilderMethods[] = {
+    {"build",tree_build,METH_VARARGS,"Build decision tree."},
     {NULL,NULL,0,NULL}
 };
-static struct PyModuleDef spammodule = {
+static struct PyModuleDef treebuildermodule = {
     PyModuleDef_HEAD_INIT,
-    "spam",   /* name of module */
+    "tree_builder",   /* name of module */
     NULL, /* module documentation, may be NULL */
     -1,       /* size of per-interpreter state of the module,
                  or -1 if the module keeps state in global variables. */
-    SpamMethods
+    TreeBuilderMethods
 };
-PyMODINIT_FUNC PyInit_spam(void){
-    return PyModule_Create(&spammodule);
+PyMODINIT_FUNC PyInit_tree_builder(void){
+    return PyModule_Create(&treebuildermodule);
 }
 
 int main(int argc, char *argv[]){
@@ -49,7 +50,7 @@ int main(int argc, char *argv[]){
         fprintf(stderr,"Fatal error: cannot decode[0]\n");
         exit(1);
     }
-    if(PyImport_AppendInittab("spam",PyInit_spam)==-1){
+    if(PyImport_AppendInittab("tree_builder",PyInit_tree_builder)==-1){
         fprintf(stderr, "Error: could not extend in-built modules table\n");
         exit(1);
     }

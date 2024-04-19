@@ -1,32 +1,29 @@
 #define PY_SSIZE_T_CLEAN
 #include <python3.11/Python.h>
-#include <python3.11/numpy/arrayobject.h>
-#include <stdlib.h>
-#include <stdio.h>
 
 static PyObject * spam_system(PyObject * self,PyObject *args){
-	//PyArrayObject* arr = (PyArrayObject*) PyArray_FromAny(args, NULL, 0,0, 
-	//		NPY_ARRAY_IN_ARRAY,NULL);
-	//
-	int ** dataptr;
-	npy_intp multi_index[3];
+    PyObject * list, *item, *number; 
+    if (!PyArg_ParseTuple(args, "O", &list)) {
+        return NULL;
+    }
+    Py_ssize_t n = PyList_Size(list);
+    if(n < 0){
+        return NULL;
+    }
+    for(Py_ssize_t i = 0; i < n; i++) {
+        item = PyList_GetItem(list, i);
+        Py_ssize_t l = PyList_Size(item);
+        if( l < 0) {
+            return NULL;
+        }
 
-    PyArrayObject *arr = (PyArrayObject *)PyArray_FromAny(args, NULL, 0, 0,
-			NPY_ARRAY_IN_ARRAY, NULL);	
-	NpyIter *iter = NpyIter_New(arr,NPY_ITER_READONLY | NPY_ITER_MULTI_INDEX |
-			NPY_ITER_REFS_OK , NPY_CORDER, NPY_NO_CASTING, NULL);
-	NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
-	NpyIter_GetMultiIndexFunc *get_multi_index = 
-		NpyIter_GetGetMultiIndex(iter, NULL);
-
-	dataptr = (int**)NpyIter_GetDataPtrArray(iter);
-
-	do{
-		get_multi_index(iter, multi_index);
-		printf("Element[%" NPY_INTP_FMT "][%" NPY_INTP_FMT "] = %d\n", 
-				multi_index[1], multi_index[2],**dataptr);
-	} while(iternext(iter));
-	return PyLong_FromLong(0);
+        for ( Py_ssize_t j = 0; j < l; j++){
+           number = PyList_GetItem(item, j);
+           long t = PyLong_AsLong(number);
+           printf("Element[%ld, %ld] = %ld\n",i,j, t);
+        }
+    }
+    return PyLong_FromLong(0);
 }
 
 
@@ -43,7 +40,6 @@ static struct PyModuleDef spammodule = {
     SpamMethods
 };
 PyMODINIT_FUNC PyInit_spam(void){
-	import_array();
     return PyModule_Create(&spammodule);
 }
 

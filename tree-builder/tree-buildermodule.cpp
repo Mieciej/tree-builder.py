@@ -1,5 +1,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <python3.11/Python.h>
+#include <iostream>
+#include <unordered_map>
 typedef unsigned long long int bitmask_t ;
 
 
@@ -7,8 +9,10 @@ int build_branch(PyObject *list, bitmask_t* rows,Py_ssize_t n_rows,
         bitmask_t* columns, Py_ssize_t n_columns ) {
 
 
-    PyObject *item, *number;
-    printf("The list is of size %ld\n", n_rows);
+    PyObject *item, *number, *target;
+    std::unordered_map<Py_ssize_t,std::unordered_map<long,unsigned long>*> 
+        *feature_counter = new std::unordered_map<Py_ssize_t, 
+        std::unordered_map<long,unsigned long>*>[n_columns-1];
 
     for (Py_ssize_t i = 0; i < n_rows; i++){
         if(!(rows[i/64] & (1 << i))){
@@ -16,7 +20,7 @@ int build_branch(PyObject *list, bitmask_t* rows,Py_ssize_t n_rows,
         }
         printf("I chose the row %ld\n", i);
 
-        for ( Py_ssize_t j = 0; j < n_columns; j++){
+        for ( Py_ssize_t j = 0; j < n_columns-1; j++){
             if(!(columns[j/64] & (1 << j))){
                 continue;
             }
@@ -28,7 +32,13 @@ int build_branch(PyObject *list, bitmask_t* rows,Py_ssize_t n_rows,
             }
             number = PyList_GetItem(item,j);
             long t = PyLong_AsLong(number);
+            target = PyList_GetItem(item,n_columns-1);
+            long c = PyLongAs_Long(target);
             printf("I have found value: %ld!\n", t);
+            if(!feature_counter[i].contains(t)){
+                feature_counter[i][t] = new 
+                    std::unordered_map<long,unsigned long>();
+            }
         }
     }
     return 0;
@@ -44,7 +54,7 @@ static PyObject * tree_build(PyObject * self,PyObject *args){
     if(n < 0){
         return NULL;
     }
-    bitmask_t *rows = (bitmask_t *) malloc(sizeof(bitmask_t) * (n/64 + 1));
+    bitmask_t *rows = new bitmask_t[n/64+1];
     rows[0] = -1;
 
 
@@ -53,7 +63,7 @@ static PyObject * tree_build(PyObject * self,PyObject *args){
     if( l < 0) {
         return NULL;
     }
-    bitmask_t *columns = (bitmask_t *) malloc(sizeof(bitmask_t) * (l/64 + 1));
+    bitmask_t *columns = new bitmask_t[l/64+1];
     columns[0] = 0;
     columns[0] = columns[0] | (1<<1);
     build_branch(list,rows,n,columns,l);

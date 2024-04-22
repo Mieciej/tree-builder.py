@@ -1,6 +1,39 @@
 #define PY_SSIZE_T_CLEAN
 #include <python3.11/Python.h>
-#include <iostream>
+typedef unsigned long long int bitmask_t ;
+
+
+int build_branch(PyObject *list, bitmask_t* rows,Py_ssize_t n_rows,
+        bitmask_t* columns, Py_ssize_t n_columns ) {
+
+
+    PyObject *item, *number;
+    printf("The list is of size %ld\n", n_rows);
+
+    for (Py_ssize_t i = 0; i < n_rows; i++){
+        if(!(rows[i/64] & (1 << i))){
+            continue;
+        }
+        printf("I chose the row %ld\n", i);
+
+        for ( Py_ssize_t j = 0; j < n_columns; j++){
+            if(!(columns[j/64] & (1 << j))){
+                continue;
+            }
+            printf("I chose the column %ld\n", j);
+            item = PyList_GetItem(list, i);
+            Py_ssize_t l = PyList_Size(item);
+            if( l < 0) {
+                return NULL;
+            }
+            number = PyList_GetItem(item,j);
+            long t = PyLong_AsLong(number);
+            printf("I have found value: %ld!\n", t);
+        }
+    }
+    return 0;
+}
+
 
 static PyObject * tree_build(PyObject * self,PyObject *args){
     PyObject * list, *item, *number; 
@@ -11,19 +44,30 @@ static PyObject * tree_build(PyObject * self,PyObject *args){
     if(n < 0){
         return NULL;
     }
-    for(Py_ssize_t i = 0; i < n; i++) {
-        item = PyList_GetItem(list, i);
-        Py_ssize_t l = PyList_Size(item);
-        if( l < 0) {
-            return NULL;
-        }
+    bitmask_t *rows = (bitmask_t *) malloc(sizeof(bitmask_t) * (n/64 + 1));
+    rows[0] = -1;
 
-        for ( Py_ssize_t j = 0; j < l; j++){
-           number = PyList_GetItem(item, j);
-           long t = PyLong_AsLong(number);
-           std::cout << "Element: " << t << std::endl;
-        }
+
+    item = PyList_GetItem(list, 0);
+    Py_ssize_t l = PyList_Size(item);
+    if( l < 0) {
+        return NULL;
     }
+    bitmask_t *columns = (bitmask_t *) malloc(sizeof(bitmask_t) * (l/64 + 1));
+    columns[0] = 0;
+    columns[0] = columns[0] | (1<<1);
+    build_branch(list,rows,n,columns,l);
+    //for(Py_ssize_t i = 0; i < n; i++) {
+        //item = PyList_GetItem(list, i);
+        //Py_ssize_t l = PyList_Size(item);
+        //if( l < 0) {
+            //return NULL;
+        //}
+        //for ( Py_ssize_t j = 0; j < l; j++){
+           //number = PyList_GetItem(item, j);
+           //long t = PyLong_AsLong(number);
+        //}
+    //}
     return PyLong_FromLong(0);
 }
 

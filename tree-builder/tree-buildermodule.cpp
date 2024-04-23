@@ -1,46 +1,48 @@
 #define PY_SSIZE_T_CLEAN
 #include <python3.11/Python.h>
 #include <iostream>
-#include <unordered_map>
+#include "feature.h"
+#include <vector>
 typedef unsigned long long int bitmask_t ;
 
 
 int build_branch(PyObject *list, bitmask_t* rows,Py_ssize_t n_rows,
         bitmask_t* columns, Py_ssize_t n_columns ) {
-
-
+    std::vector<feature*> * features = new std::vector<feature*>();
     PyObject *item, *number, *target;
-    std::unordered_map<Py_ssize_t,std::unordered_map<long,unsigned long>*> 
-        *feature_counter = new std::unordered_map<Py_ssize_t, 
-        std::unordered_map<long,unsigned long>*>[n_columns-1];
 
-    for (Py_ssize_t i = 0; i < n_rows; i++){
-        if(!(rows[i/64] & (1 << i))){
-            continue;
-        }
-        printf("I chose the row %ld\n", i);
+    for (Py_ssize_t i = 0; i < n_rows; i++) {
 
-        for ( Py_ssize_t j = 0; j < n_columns-1; j++){
-            if(!(columns[j/64] & (1 << j))){
-                continue;
-            }
-            printf("I chose the column %ld\n", j);
+        for ( Py_ssize_t j = 0; j < n_columns-1; j++) {
+
             item = PyList_GetItem(list, i);
             Py_ssize_t l = PyList_Size(item);
             if( l < 0) {
-                return NULL;
+                return (int)NULL;
             }
             number = PyList_GetItem(item,j);
             long t = PyLong_AsLong(number);
             target = PyList_GetItem(item,n_columns-1);
-            long c = PyLongAs_Long(target);
-            printf("I have found value: %ld!\n", t);
-            if(!feature_counter[i].contains(t)){
-                feature_counter[i][t] = new 
-                    std::unordered_map<long,unsigned long>();
+            long c = PyLong_AsLong(target);
+            std::pair<long,long> * pair = new std::pair<long,long>(t,c) ;
+            if(j < features->size()){
+                features->at(j)->values->push_back(pair);
+                continue;
             }
+            feature* new_feature = new feature(n_rows);
+
+            new_feature->values->push_back(pair);
+            features->push_back(new_feature);
         }
     }
+    std::cout << "INFO: Finished reading features." <<std::endl;
+    for ( size_t i = 0; i<n_columns-1;  i++){
+        feature *feat = features->at(i);
+        std::cout<<"Feature " << i  <<": "<< std::endl;
+        for ( size_t j = 0; j < n_rows; j++){
+            std::cout <<"\t" << feat->values->at(j)->first << " "<< feat->values->at(j)->second <<std::endl;
+        }
+    }   
     return 0;
 }
 

@@ -1,5 +1,5 @@
 from setuptools import setup, Extension
-
+import os
 setup(
     name="tree_builder",
     version="1.0",
@@ -8,5 +8,6 @@ setup(
     ext_modules=[Extension("tree_builder",
                            sources=["tree-builder/feature.cpp",
                                     "tree-builder/tree-buildermodule.cpp",],
-                           include_dirs=["tree-builder"])]
+                           include_dirs=[f"tree-builder"],
+                           language="c++" )]
 )

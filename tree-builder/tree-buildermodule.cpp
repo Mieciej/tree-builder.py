@@ -3,7 +3,6 @@
 #include <iostream>
 #include "feature.h"
 #include <vector>
-typedef unsigned long long int bitmask_t ;
 
 
 int build_branch(PyObject *list, bitmask_t* rows,Py_ssize_t n_rows,
@@ -35,13 +34,13 @@ int build_branch(PyObject *list, bitmask_t* rows,Py_ssize_t n_rows,
             features->push_back(new_feature);
         }
     }
+    bitmask_t n[1];
+    n[0] = ~0;
     std::cout << "INFO: Finished reading features." <<std::endl;
     for ( size_t i = 0; i<n_columns-1;  i++){
         feature *feat = features->at(i);
-        std::cout<<"Feature " << i  <<": "<< std::endl;
-        for ( size_t j = 0; j < n_rows; j++){
-            std::cout <<"\t" << feat->values->at(j)->first << " "<< feat->values->at(j)->second <<std::endl;
-        }
+        float ent = feat->get_entropy(n);
+        std::cout<<"Feature " << i  <<": "<< ent<< std::endl;
     }   
     return 0;
 }

@@ -7,6 +7,7 @@ setup(
     # NOTE order of sources matters
     ext_modules=[Extension("tree_builder",
                            sources=["tree-builder/feature.cpp",
+                                    "tree-builder/tree.cpp",
                                     "tree-builder/tree-buildermodule.cpp",],
                            include_dirs=[f"tree-builder"],
                            language="c++" )]

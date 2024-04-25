@@ -3,6 +3,7 @@
 #include <iostream>
 #include "feature.h"
 #include <vector>
+#include "tree.h"
 
 
 int build_branch(PyObject *list, bitmask_t* rows,Py_ssize_t n_rows,
@@ -10,6 +11,8 @@ int build_branch(PyObject *list, bitmask_t* rows,Py_ssize_t n_rows,
     std::vector<feature*> * features = new std::vector<feature*>();
     PyObject *item, *number, *target;
 
+    long *classes = new long [n_rows];
+    size_t i=0;
     for (Py_ssize_t i = 0; i < n_rows; i++) {
 
         for ( Py_ssize_t j = 0; j < n_columns-1; j++) {
@@ -23,6 +26,7 @@ int build_branch(PyObject *list, bitmask_t* rows,Py_ssize_t n_rows,
             long t = PyLong_AsLong(number);
             target = PyList_GetItem(item,n_columns-1);
             long c = PyLong_AsLong(target);
+            classes[i] =c;
             std::pair<long,long> * pair = new std::pair<long,long>(t,c) ;
             if(j < features->size()){
                 features->at(j)->values->push_back(pair);
@@ -42,6 +46,8 @@ int build_branch(PyObject *list, bitmask_t* rows,Py_ssize_t n_rows,
         float ent = feat->get_entropy(n);
         std::cout<<"Feature " << i  <<": "<< ent<< std::endl;
     }   
+    branch b(n_rows, n, n, classes);
+    std::cout << b.get_entropy() << std::endl;
     return 0;
 }
 

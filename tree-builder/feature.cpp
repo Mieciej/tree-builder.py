@@ -41,7 +41,6 @@ feature::get_entropy(bitmask_t * chosen_rows){
 
         for (auto j = i->second.begin(); j != i->second.end(); j++){
             ent -= (log((float)j->second/(float)n)/log(2.0));
-            std::cout << log((float)j->second/(float)n)/log(2.0)<<std::endl;
         }
         ret += (float)n/(float)n_chosen_rows * ent;
         

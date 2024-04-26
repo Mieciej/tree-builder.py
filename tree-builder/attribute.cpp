@@ -24,7 +24,6 @@ Attribute::get_entropy(bitmask_t * chosen_rows){
             c[values->at(i)->second] = 1;
             continue;
         }
-        
         std::unordered_map<long,unsigned long>  &c =
             counter[values->at(i)->first];
         c[values->at(i)->second] += 1;
@@ -39,10 +38,12 @@ Attribute::get_entropy(bitmask_t * chosen_rows){
         }
 
         for (auto j = i->second.begin(); j != i->second.end(); j++){
+            if (j->second == 0){
+                continue;
+            }
             ent -= (log((float)j->second/(float)n)/log(2.0));
         }
         ret += (float)n/(float)n_chosen_rows * ent;
-        
     }
     return ret;
 

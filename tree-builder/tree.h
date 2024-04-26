@@ -8,9 +8,11 @@ public:
            bitmask_t* selected_rows, long * classes);
     float get_entropy();
     std::unordered_map<long,Branch*>* children;
-    int split(Attribute * attribute);
-private:
+    int split();
+    bool is_leaf;
+    Attribute *split_attribute;
     long *classes;
+private:
     size_t n_classes;
     std::vector<Attribute *> attributes;
     bitmask_t* selected_rows;

@@ -5,9 +5,10 @@
 #include <vector>
 #include "tree.h"
 
+void expand_tree(Branch * b);
 
-int build_branch(PyObject *list, bitmask_t* rows,Py_ssize_t n_rows,
-        bitmask_t* columns, Py_ssize_t n_columns ) {
+int build_branch(PyObject *list, bitmask_t* rows,
+                 Py_ssize_t n_rows, Py_ssize_t n_columns ) {
     std::vector<Attribute*> * attributes = new std::vector<Attribute*>();
     PyObject *item, *number, *target;
 
@@ -41,16 +42,31 @@ int build_branch(PyObject *list, bitmask_t* rows,Py_ssize_t n_rows,
     bitmask_t n[1];
     n[0] = ~0;
     std::cout << "INFO: Finished reading features." <<std::endl;
-    for ( size_t i = 0; i<n_columns-1;  i++){
-        Attribute *feat = attributes->at(i);
-        float ent = feat->get_entropy(n);
-        std::cout<<"Feature " << i  <<": "<< ent<< std::endl;
-    }   
-    Branch b(n_rows, *attributes, n, classes);
-    std::cout << b.get_entropy() << std::endl;
-    b.split((*attributes)[0]);
+    Branch root(n_rows, *attributes, n, classes);
+    expand_tree(&root);
+    Branch *curr = &root;
+    while(!curr->is_leaf){
+        std::cout << curr << " value: ";
+        for (auto c : *curr->children){
+            std::cout << c.first;
+            
+        }
+    }
     return 0;
 }
+
+void expand_tree(Branch * b){
+    Branch *curr = b;
+    if (!(curr->split())){
+        for(auto child : *curr->children){
+            expand_tree(child.second);
+        }
+    }
+    if(curr->is_leaf){
+        return;
+    }
+}
+
 
 
 static PyObject * tree_build(PyObject * self,PyObject *args){
@@ -71,10 +87,7 @@ static PyObject * tree_build(PyObject * self,PyObject *args){
     if( l < 0) {
         return NULL;
     }
-    bitmask_t *columns = new bitmask_t[l/64+1];
-    columns[0] = 0;
-    columns[0] = columns[0] | (1<<1);
-    build_branch(list,rows,n,columns,l);
+    build_branch(list,rows,n,l);
     return PyLong_FromLong(0);
 }
 

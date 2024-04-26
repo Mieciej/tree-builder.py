@@ -1,17 +1,15 @@
 #include "tree.h"
 #include <iostream>
-#include <ostream>
 #include <unordered_map>
 #include <cmath>
-
-branch::branch(size_t n_classes, bitmask_t *selected_features,
+Branch::Branch(size_t n_classes, Attribute *attribute,
                bitmask_t *selected_rows, long * classes) 
-    : n_classes(n_classes), selected_features(selected_features),
+    : n_classes(n_classes), attribute(attribute),
     selected_rows(selected_rows), classes(classes) {
 }
 
 float
-branch::get_entropy(){
+Branch::get_entropy(){
     float ret = 0;
     std::unordered_map<long, size_t> counter;
     for (size_t i =0; i< n_classes; i++){
@@ -27,8 +25,23 @@ branch::get_entropy(){
         if( !(selected_rows[i/64] & (1 << i))) {
             continue;
         }
-        ret -= (float)counter[i]/(float)n_classes* log((float)counter[i]/(float)n_classes)/log(2.0f);
+        ret -= (float)counter[i]/(float)n_classes *
+            log((float)counter[i]/(float)n_classes)/log(2.0f);
         std::cout<< ret <<std::endl;
     }
     return ret;
 }
+
+int
+Branch::split(){
+    children = new std::unordered_map<long, Branch*>();
+    for (size_t i =0; i< n_classes; i++){
+        if( !(selected_rows[i/64] & (1 << i))) {
+            continue;
+        }
+        //if(!counter.count(i)){
+            //children[classes[i]] = 
+        //}
+    }
+    return 0;
+};

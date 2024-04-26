@@ -1,14 +1,14 @@
 #define PY_SSIZE_T_CLEAN
 #include <python3.11/Python.h>
 #include <iostream>
-#include "feature.h"
+#include "attribute.h"
 #include <vector>
 #include "tree.h"
 
 
 int build_branch(PyObject *list, bitmask_t* rows,Py_ssize_t n_rows,
         bitmask_t* columns, Py_ssize_t n_columns ) {
-    std::vector<feature*> * features = new std::vector<feature*>();
+    std::vector<Attribute*> * attributes = new std::vector<Attribute*>();
     PyObject *item, *number, *target;
 
     long *classes = new long [n_rows];
@@ -28,25 +28,25 @@ int build_branch(PyObject *list, bitmask_t* rows,Py_ssize_t n_rows,
             long c = PyLong_AsLong(target);
             classes[i] =c;
             std::pair<long,long> * pair = new std::pair<long,long>(t,c) ;
-            if(j < features->size()){
-                features->at(j)->values->push_back(pair);
+            if(j < attributes->size()){
+                attributes->at(j)->values->push_back(pair);
                 continue;
             }
-            feature* new_feature = new feature(n_rows);
+            Attribute* new_attribute = new Attribute(n_rows);
 
-            new_feature->values->push_back(pair);
-            features->push_back(new_feature);
+            new_attribute->values->push_back(pair);
+            attributes->push_back(new_attribute);
         }
     }
     bitmask_t n[1];
     n[0] = ~0;
     std::cout << "INFO: Finished reading features." <<std::endl;
     for ( size_t i = 0; i<n_columns-1;  i++){
-        feature *feat = features->at(i);
+        Attribute *feat = attributes->at(i);
         float ent = feat->get_entropy(n);
         std::cout<<"Feature " << i  <<": "<< ent<< std::endl;
     }   
-    branch b(n_rows, n, n, classes);
+    Branch b(n_rows, attributes->at(0), n, classes);
     std::cout << b.get_entropy() << std::endl;
     return 0;
 }
@@ -74,17 +74,6 @@ static PyObject * tree_build(PyObject * self,PyObject *args){
     columns[0] = 0;
     columns[0] = columns[0] | (1<<1);
     build_branch(list,rows,n,columns,l);
-    //for(Py_ssize_t i = 0; i < n; i++) {
-        //item = PyList_GetItem(list, i);
-        //Py_ssize_t l = PyList_Size(item);
-        //if( l < 0) {
-            //return NULL;
-        //}
-        //for ( Py_ssize_t j = 0; j < l; j++){
-           //number = PyList_GetItem(item, j);
-           //long t = PyLong_AsLong(number);
-        //}
-    //}
     return PyLong_FromLong(0);
 }
 

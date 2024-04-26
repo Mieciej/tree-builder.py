@@ -1,16 +1,19 @@
 #ifndef TREE_H
 #define TREE_H
-#include "feature.h"
-class branch{
+#include "attribute.h"
+#include <unordered_map>
+class Branch{
 public:
-    branch(size_t n_classes, bitmask_t* selected_features,
+    Branch(size_t n_classes, Attribute* attribute,
            bitmask_t* selected_rows, long * classes);
     float get_entropy();
+    std::unordered_map<long,Branch*>* children;
 private:
     long *classes;
     size_t n_classes;
-    bitmask_t* selected_features;
+    Attribute* attribute;
     bitmask_t* selected_rows;
+    int split();
 };
 
 #endif

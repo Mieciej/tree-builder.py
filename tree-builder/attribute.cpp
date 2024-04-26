@@ -1,15 +1,14 @@
-#include "feature.h"
+#include "attribute.h"
 #include <unordered_map>
 #include <cmath>
-#include<iostream>
-feature::feature(size_t n_values) {
+Attribute::Attribute(size_t n_values) {
     values = new std::vector<std::pair<long,long>*>();
     values->reserve(n_values);
     n_val = n_values;
 
 }
 float
-feature::get_entropy(bitmask_t * chosen_rows){
+Attribute::get_entropy(bitmask_t * chosen_rows){
 
     std::unordered_map<long,std::unordered_map<long,unsigned long>> counter;
     size_t n_chosen_rows=0;

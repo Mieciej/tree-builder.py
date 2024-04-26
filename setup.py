@@ -6,7 +6,7 @@ setup(
     description="This is a demo package",
     # NOTE order of sources matters
     ext_modules=[Extension("tree_builder",
-                           sources=["tree-builder/feature.cpp",
+                           sources=["tree-builder/attribute.cpp",
                                     "tree-builder/tree.cpp",
                                     "tree-builder/tree-buildermodule.cpp",],
                            include_dirs=[f"tree-builder"],

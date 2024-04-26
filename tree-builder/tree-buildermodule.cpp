@@ -46,8 +46,9 @@ int build_branch(PyObject *list, bitmask_t* rows,Py_ssize_t n_rows,
         float ent = feat->get_entropy(n);
         std::cout<<"Feature " << i  <<": "<< ent<< std::endl;
     }   
-    Branch b(n_rows, attributes->at(0), n, classes);
+    Branch b(n_rows, *attributes, n, classes);
     std::cout << b.get_entropy() << std::endl;
+    b.split((*attributes)[0]);
     return 0;
 }
 

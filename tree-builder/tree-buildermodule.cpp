@@ -33,7 +33,7 @@ int build_branch(PyObject *list, bitmask_t* rows,
                 attributes->at(j)->values->push_back(pair);
                 continue;
             }
-            Attribute* new_attribute = new Attribute(n_rows);
+            Attribute* new_attribute = new Attribute(n_rows,j);
 
             new_attribute->values->push_back(pair);
             attributes->push_back(new_attribute);
@@ -44,14 +44,7 @@ int build_branch(PyObject *list, bitmask_t* rows,
     std::cout << "INFO: Finished reading features." <<std::endl;
     Branch root(n_rows, *attributes, n, classes);
     expand_tree(&root);
-    Branch *curr = &root;
-    while(!curr->is_leaf){
-        std::cout << curr << " value: ";
-        for (auto c : *curr->children){
-            std::cout << c.first;
-            
-        }
-    }
+    std::cout << "INFO: Finished constructing tree. "<<std::endl;
     return 0;
 }
 

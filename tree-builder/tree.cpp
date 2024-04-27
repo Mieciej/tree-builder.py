@@ -3,11 +3,36 @@
 #include <set>
 #include <unordered_map>
 #include <cmath>
+#include <iostream>
 #include <bitset>
 Branch::Branch(size_t n_rows, std::vector<Attribute*> attributes,
                bitmask_t *selected_rows, long * classes) 
     : n_classes(n_rows),attributes(attributes),
     classes(classes), selected_rows(selected_rows) {
+    std::unordered_map<long, size_t> counter;
+    size_t top_size=0;
+    if (attributes.size() == 0){
+
+        for (size_t row =0; row< n_classes; row++){
+            if( !(selected_rows[row/64] & (1 << row))) {
+                continue;
+            }
+            if(!counter.count(classes[row])){
+                counter[classes[row]] = 0;
+            }
+            counter[classes[row]]++;
+            if( counter[classes[row]] > top_size){
+                decision = classes[row];
+            }
+        }
+        is_leaf = true;
+        
+        std::cout << "\tI am a leaf with majority decision: " 
+            <<decision << std::endl; 
+        return;
+    }
+
+
     long last_seen_class;
     bool has_seen_class = false;
     is_leaf = true;
@@ -26,30 +51,39 @@ Branch::Branch(size_t n_rows, std::vector<Attribute*> attributes,
         }
     }
 
-    if(is_leaf) {
-        std::bitset<64> y(selected_rows[0]);
+    if(is_leaf){
+
+        decision = last_seen_class;
+        std::cout << "\tI am a leaf with decision: " 
+            <<decision << std::endl; 
     }
+
 }
 
 float
 Branch::get_entropy(){
     float ret = 0;
     std::unordered_map<long, size_t> counter;
-    for (size_t i =0; i< n_classes; i++){
-        if( !(selected_rows[i/64] & (1 << i))) {
+    size_t n_selected_rows = 0;
+    for (size_t row =0; row< n_classes; row++){
+        if( !(selected_rows[row/64] & (1 << row))) {
             continue;
         }
-        if(!counter.count(i)){
-            counter[classes[i]] = 0;
+        n_selected_rows++;
+        if(!counter.count(row)){
+            counter[classes[row]] = 0;
         }
-        counter[classes[i]]++;
+        counter[classes[row]]++;
     }
-    for (size_t i =0; i< n_classes; i++){
-        if( !(selected_rows[i/64] & (1 << i))) {
+    for (size_t row =0; row< n_classes; row++){
+        if( !(selected_rows[row/64] & (1 << row))) {
             continue;
         }
-        ret -= (float)counter[i]/(float)n_classes *
-            log((float)counter[i]/(float)n_classes)/log(2.0f);
+        if(counter[classes[row]] == 0) {
+            continue;
+        }
+        ret -= (float)counter[classes[row]]/(float)n_selected_rows *
+            log2((float)counter[classes[row]]/(float)n_selected_rows);
     }
     return ret;
 }
@@ -57,50 +91,54 @@ Branch::get_entropy(){
 int
 Branch::split(){
     if (is_leaf) return 1;
-    Attribute *attribute = nullptr;
+
     children = new std::unordered_map<long, Branch*>();
-    std::unordered_map<long,bitmask_t*> rows; 
+    std::unordered_map<long,bitmask_t*> passed_on_rows; 
     std::set<long> unique_values; 
     std::vector<Attribute *> selected_attributes;
-    size_t counter_rows = 0;
-    float top_ent = INFINITY;
+
+    Attribute *best_attribute = nullptr;
+    float top_info_gain = INFINITY;
+    float ent_class = get_entropy();
+
     for ( Attribute *att : attributes) {
-        float curr_ent = att->get_entropy(selected_rows);
-        if ( curr_ent < top_ent ) {
-            attribute = att;
-            top_ent = curr_ent;
+        float info_gain = ent_class -  att->get_entropy(selected_rows);
+        if ( info_gain < top_info_gain ) {
+            best_attribute = att;
+            top_info_gain = info_gain;
         }
     }
-    assert(((void)"NO ATTRIBUTE FOUND",attribute !=nullptr));
-
-    split_attribute = attribute;
-    for (size_t i =0; i< n_classes; i++){
-        if( !(selected_rows[i/64] & (1 << i))) {
+    std::cout << "Splitting on attribute: " << best_attribute->label<<
+        " with information gain: " <<top_info_gain<<std::endl;
+    split_attribute = best_attribute;
+    for (size_t row =0; row< n_classes; row++){
+        if( !(selected_rows[row/64] & (1 << row))) {
             continue;
         }
-        counter_rows++;
-        long att = attribute->values->at(i)->first;
-        unique_values.insert(att);
-        if(!rows.count(att)){
-            rows[att] = 
+        long att_value = best_attribute->values->at(row)->first;
+        unique_values.insert(att_value);
+        if(!passed_on_rows.count(att_value)){
+            passed_on_rows[att_value] = 
                 new bitmask_t[n_classes/64+1]{};
 
         }
-        rows[att][i/64] |= (1<<i);
+        passed_on_rows[att_value][row/64] |= (1<<row);
 
     }
-    assert(((void)"DID NOT FIND UNIQUE VALUES",unique_values.size()==0));  
     for(auto c : attributes){
-        if(attribute == c){
+        if(best_attribute == c){
             continue;
         }
         selected_attributes.push_back(c);
 
     }
-    for (auto c : unique_values){
+    for (auto value : unique_values){
+        std::cout << "\tValue: " << value 
+            <<", selected "<< n_classes <<" rows: "<< 
+            std::bitset<16>(passed_on_rows[value][0]) <<std::endl;
         Branch * child =  
-            new Branch(counter_rows,selected_attributes,rows[c],classes);
-        (*children)[c] = child;
+            new Branch(n_classes,selected_attributes,passed_on_rows[value],classes);
+        (*children)[value] = child;
     }
     return 0;
 };

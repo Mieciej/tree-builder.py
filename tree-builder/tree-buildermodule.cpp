@@ -7,35 +7,57 @@
 
 extern "C" void expand_tree(Branch* b);
 
-extern "C" void printBT(const Branch* node, long value);
-extern "C" void print_tree_helper(const std::string& prefix, const Branch* node, bool not_last, long value);
+extern "C" void printBT(const Branch* node, long value,
+                        std::unordered_map<long, std::string> &dictionary);
+extern "C" void print_tree_helper(const std::string& prefix, const Branch* node,
+                                  bool not_last, long value,std::unordered_map<long, std::string> &dictionary);
 extern "C" int build_branch(PyObject *list, bitmask_t* rows,
                  Py_ssize_t n_rows, Py_ssize_t n_columns ) {
     std::vector<Attribute*> * attributes
         = new std::vector<Attribute*>();
-    PyObject *item, *number, *target;
-
+    PyObject *item, *value, *target;
+    std::unordered_map<std::string,long> encoding; 
+    std::unordered_map<long, std::string> dictionary;
     long *classes = new long [n_rows];
-    for (Py_ssize_t i = 0; i < n_rows; i++) {
+    long encoder = 0;
+    for (Py_ssize_t row = 0; row < n_rows; row++) {
 
-        for ( Py_ssize_t j = 0; j < n_columns-1; j++) {
+        for ( Py_ssize_t column = 0; column < n_columns-1; column++) {
 
-            item = PyList_GetItem(list, i);
+            item = PyList_GetItem(list, row);
             Py_ssize_t l = PyList_Size(item);
             if( l < 0) {
                 return (int)NULL;
             }
-            number = PyList_GetItem(item,j);
-            long t = PyLong_AsLong(number);
+            value = PyList_GetItem(item,column);
+            PyObject* str = PyObject_Str(value);
+            const char* bytes = PyUnicode_AsUTF8(str);
+            std::string key_value (bytes);
+            if(!encoding.count(key_value)) {
+                encoding[key_value] = encoder++;
+                dictionary[encoder-1] = key_value;
+                std::cout <<"Value: " <<key_value <<
+                ", encoding: "<<encoding[key_value] <<std::endl;
+            }
+
             target = PyList_GetItem(item,n_columns-1);
-            long c = PyLong_AsLong(target);
-            classes[i] =c;
-            std::pair<long,long> * pair = new std::pair<long,long>(t,c) ;
-            if((unsigned)j < attributes->size()){
-                attributes->at(j)->values->push_back(pair);
+            str = PyObject_Str(target);
+            bytes = PyUnicode_AsUTF8(str);
+            std::string key_target (bytes);
+            if(!encoding.count(key_target)) {
+                encoding[key_target] = encoder++;
+                dictionary[encoder-1] = key_target;
+                std::cout <<"Target class: " <<key_target <<
+                ", encoding: "<<encoding[key_target] <<std::endl;
+            }
+
+            classes[row] = encoding[key_target];
+            std::pair<long,long> * pair = new std::pair<long,long>(encoding[key_value],encoding[key_target]) ;
+            if((unsigned)column < attributes->size()){
+                attributes->at(column)->values->push_back(pair);
                 continue;
             }
-            Attribute* new_attribute = new Attribute(n_rows,j);
+            Attribute* new_attribute = new Attribute(n_rows,column);
 
             new_attribute->values->push_back(pair);
             attributes->push_back(new_attribute);
@@ -46,8 +68,8 @@ extern "C" int build_branch(PyObject *list, bitmask_t* rows,
     std::cout << "INFO: Finished reading features." <<std::endl;
     Branch root(n_rows, *attributes, n, classes);
     expand_tree(&root);
-    std::cout << "INFO: Finished constructing tree. "<<std::endl;
-    printBT(&root, 0);
+    std::cout << "INFO: Finished constructing a tree. "<<std::endl;
+    printBT(&root, 0, dictionary);
     return 0;
 }
 
@@ -62,33 +84,33 @@ extern "C" void expand_tree(Branch * b){
         return;
     }
 }
-extern "C" void print_tree_helper(const std::string& prefix, const Branch* node, bool not_last, long value)
+extern "C" void print_tree_helper(const std::string& prefix, const Branch* node, bool not_last, long value,std::unordered_map<long,std::string> &dictionary)
 {
     if (node != nullptr)
     {
         std::cout << prefix;
 
         std::cout << (not_last ? "├": "└");
-        std::cout << value <<"──";
+        std::cout << dictionary[value] <<"──";
         if(!node->is_leaf) {
             std::cout << node->split_attribute->label << std::endl;
         } else {
-            std::cout << node->decision<<std::endl;
+            std::cout << dictionary[node->decision]<<std::endl;
             return;
         }
         size_t i =0;
         for (auto c: *node->children)
         {
             bool nl =  i != node->children->size()-1;
-            print_tree_helper(prefix + (not_last ? "│    " : "     "), c.second,nl , c.first);
+            print_tree_helper(prefix + (not_last ? "│    " : "     "), c.second,nl , c.first,dictionary);
             ++i;
         }
     }
 }
 
-extern "C" void printBT(const Branch* node, long value)
+extern "C" void printBT(const Branch* node, long value, std::unordered_map<long,std::string> &dictionary)
 {
-    print_tree_helper("", node, false, value);
+    print_tree_helper("", node, false, value, dictionary);
 }
 
 

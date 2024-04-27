@@ -14,7 +14,6 @@ extern "C" int build_branch(PyObject *list, bitmask_t* rows,
     PyObject *item, *number, *target;
 
     long *classes = new long [n_rows];
-    size_t i=0;
     for (Py_ssize_t i = 0; i < n_rows; i++) {
 
         for ( Py_ssize_t j = 0; j < n_columns-1; j++) {
@@ -30,7 +29,7 @@ extern "C" int build_branch(PyObject *list, bitmask_t* rows,
             long c = PyLong_AsLong(target);
             classes[i] =c;
             std::pair<long,long> * pair = new std::pair<long,long>(t,c) ;
-            if(j < attributes->size()){
+            if((unsigned)j < attributes->size()){
                 attributes->at(j)->values->push_back(pair);
                 continue;
             }
@@ -92,7 +91,7 @@ void printBT(const Branch* node, long value)
 
 
 static PyObject * tree_build(PyObject * self,PyObject *args){
-    PyObject * list, *item, *number; 
+    PyObject * list, *item;
     if (!PyArg_ParseTuple(args, "O", &list)) {
         return NULL;
     }
@@ -140,7 +139,6 @@ int main(int argc, char *argv[]){
         fprintf(stderr, "Error: could not extend in-built modules table\n");
         exit(1);
     }
-    Py_SetProgramName(program);
     Py_Initialize();
     PyMem_RawFree(program);
 }

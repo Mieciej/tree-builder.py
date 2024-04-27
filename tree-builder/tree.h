@@ -11,11 +11,11 @@ public:
     int split();
     bool is_leaf;
     Attribute *split_attribute;
-    long *classes;
     long decision;
 private:
     size_t n_classes;
     std::vector<Attribute *> attributes;
+    long *classes;
     bitmask_t* selected_rows;
 };
 

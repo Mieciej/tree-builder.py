@@ -33,7 +33,7 @@ Branch::Branch(size_t n_rows, std::vector<Attribute*> attributes,
     }
 
 
-    long last_seen_class;
+    long last_seen_class = 0;
     bool has_seen_class = false;
     is_leaf = true;
     for (size_t i =0; i< n_classes; i++){

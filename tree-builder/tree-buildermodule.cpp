@@ -5,14 +5,14 @@
 #include <vector>
 #include "tree.h"
 
-extern "C" void expand_tree(Branch<long,long> * b);
+extern "C" void expand_tree(Branch* b);
 
-extern "C" void printBT(const Branch<long,long>* node, long value);
-extern "C" void print_tree_helper(const std::string& prefix, const Branch<long,long>* node, bool not_last, long value);
+extern "C" void printBT(const Branch* node, long value);
+extern "C" void print_tree_helper(const std::string& prefix, const Branch* node, bool not_last, long value);
 extern "C" int build_branch(PyObject *list, bitmask_t* rows,
                  Py_ssize_t n_rows, Py_ssize_t n_columns ) {
-    std::vector<Attribute<long,long>*> * attributes
-        = new std::vector<Attribute<long,long>*>();
+    std::vector<Attribute*> * attributes
+        = new std::vector<Attribute*>();
     PyObject *item, *number, *target;
 
     long *classes = new long [n_rows];
@@ -35,7 +35,7 @@ extern "C" int build_branch(PyObject *list, bitmask_t* rows,
                 attributes->at(j)->values->push_back(pair);
                 continue;
             }
-            Attribute<long,long>* new_attribute = new Attribute<long,long>(n_rows,j);
+            Attribute* new_attribute = new Attribute(n_rows,j);
 
             new_attribute->values->push_back(pair);
             attributes->push_back(new_attribute);
@@ -44,15 +44,15 @@ extern "C" int build_branch(PyObject *list, bitmask_t* rows,
     bitmask_t n[1];
     n[0] = ~0;
     std::cout << "INFO: Finished reading features." <<std::endl;
-    Branch<long,long> root(n_rows, *attributes, n, classes);
+    Branch root(n_rows, *attributes, n, classes);
     expand_tree(&root);
     std::cout << "INFO: Finished constructing tree. "<<std::endl;
     printBT(&root, 0);
     return 0;
 }
 
-extern "C" void expand_tree(Branch<long,long> * b){
-    Branch<long,long> *curr = b;
+extern "C" void expand_tree(Branch * b){
+    Branch *curr = b;
     if (!(curr->split())){
         for(auto child : *curr->children){
             expand_tree(child.second);
@@ -62,7 +62,7 @@ extern "C" void expand_tree(Branch<long,long> * b){
         return;
     }
 }
-extern "C" void print_tree_helper(const std::string& prefix, const Branch<long,long>* node, bool not_last, long value)
+extern "C" void print_tree_helper(const std::string& prefix, const Branch* node, bool not_last, long value)
 {
     if (node != nullptr)
     {
@@ -86,7 +86,7 @@ extern "C" void print_tree_helper(const std::string& prefix, const Branch<long,l
     }
 }
 
-extern "C" void printBT(const Branch<long,long>* node, long value)
+extern "C" void printBT(const Branch* node, long value)
 {
     print_tree_helper("", node, false, value);
 }

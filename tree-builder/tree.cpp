@@ -5,12 +5,11 @@
 #include <iostream>
 #include <bitset>
 #include <set>
-template <typename T, typename C> 
-Branch<T,C>::Branch(size_t n_rows, std::vector<Attribute<T,C>*> attributes,
-               bitmask_t *selected_rows, C * classes) 
+Branch::Branch(size_t n_rows, std::vector<Attribute*> attributes,
+               bitmask_t *selected_rows, long * classes) 
     : n_classes(n_rows),attributes(attributes),
     classes(classes), selected_rows(selected_rows) {
-    std::unordered_map<C, size_t> counter;
+    std::unordered_map<long, size_t> counter;
     size_t top_size=0;
     if (attributes.size() == 0){
 
@@ -34,7 +33,7 @@ Branch<T,C>::Branch(size_t n_rows, std::vector<Attribute<T,C>*> attributes,
     }
 
 
-    C last_seen_class = 0;
+    long last_seen_class = 0;
     bool has_seen_class = false;
     is_leaf = true;
     for (size_t i =0; i< n_classes; i++){
@@ -61,11 +60,10 @@ Branch<T,C>::Branch(size_t n_rows, std::vector<Attribute<T,C>*> attributes,
 
 }
 
-template <typename T, typename C> 
 float
-Branch<T,C>::get_entropy(){
+Branch::get_entropy(){
     float ret = 0;
-    std::unordered_map<C, size_t> counter;
+    std::unordered_map<long, size_t> counter;
     size_t n_selected_rows = 0;
     for (size_t row =0; row< n_classes; row++){
         if( !(selected_rows[row/64] & (1 << row))) {
@@ -89,21 +87,20 @@ Branch<T,C>::get_entropy(){
     }
     return ret;
 }
-template <typename T, typename C> 
 int
-Branch<T,C>::split(){
+Branch::split(){
     if (is_leaf) return 1;
 
-    children = new std::unordered_map<T, Branch<T,C>*>();
-    std::unordered_map<T,bitmask_t*> passed_on_rows; 
-    std::set<T> unique_values; 
-    std::vector<Attribute<T,C> *> selected_attributes;
+    children = new std::unordered_map<long, Branch*>();
+    std::unordered_map<long,bitmask_t*> passed_on_rows; 
+    std::set<long> unique_values; 
+    std::vector<Attribute *> selected_attributes;
 
-    Attribute<T,C> *best_attribute = nullptr;
+    Attribute *best_attribute = nullptr;
     float top_info_gain = -INFINITY;
     float ent_class = get_entropy();
 
-    for ( Attribute<T,C> *att : attributes) {
+    for ( Attribute *att : attributes) {
         float info_gain = ent_class -  att->get_entropy(selected_rows);
         if ( info_gain > top_info_gain ) {
             best_attribute = att;
@@ -117,7 +114,7 @@ Branch<T,C>::split(){
         if( !(selected_rows[row/64] & (1 << row))) {
             continue;
         }
-        T att_value = best_attribute->values->at(row)->first;
+        long att_value = best_attribute->values->at(row)->first;
         unique_values.insert(att_value);
         if(!passed_on_rows.count(att_value)){
             passed_on_rows[att_value] = 
@@ -145,8 +142,3 @@ Branch<T,C>::split(){
     return 0;
 };
 
-template int Branch<long,long>::split();
-
-template float Branch<long,long>::get_entropy();
-template Branch<long,long>::Branch(size_t n_rows, std::vector<Attribute<long,long>*> attributes,
-               bitmask_t *selected_rows, long * classes);

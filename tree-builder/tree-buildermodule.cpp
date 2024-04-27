@@ -7,7 +7,8 @@
 
 void expand_tree(Branch * b);
 
-int build_branch(PyObject *list, bitmask_t* rows,
+void printBT(const Branch* node, long value);
+extern "C" int build_branch(PyObject *list, bitmask_t* rows,
                  Py_ssize_t n_rows, Py_ssize_t n_columns ) {
     std::vector<Attribute*> * attributes = new std::vector<Attribute*>();
     PyObject *item, *number, *target;
@@ -45,6 +46,7 @@ int build_branch(PyObject *list, bitmask_t* rows,
     Branch root(n_rows, *attributes, n, classes);
     expand_tree(&root);
     std::cout << "INFO: Finished constructing tree. "<<std::endl;
+    printBT(&root, 0);
     return 0;
 }
 
@@ -59,7 +61,34 @@ void expand_tree(Branch * b){
         return;
     }
 }
+void printBT(const std::string& prefix, const Branch* node, bool not_last, long value)
+{
+    if (node != nullptr)
+    {
+        std::cout << prefix;
 
+        std::cout << (not_last ? "├": "└");
+        std::cout << value <<"──";
+        if(!node->is_leaf) {
+            std::cout << node->split_attribute->label << std::endl;
+        } else {
+            std::cout << node->decision<<std::endl;
+            return;
+        }
+        size_t i =0;
+        for (auto c: *node->children)
+        {
+            bool nl =  i != node->children->size()-1;
+            printBT(prefix + (not_last ? "│    " : "     "), c.second,nl , c.first);
+            ++i;
+        }
+    }
+}
+
+void printBT(const Branch* node, long value)
+{
+    printBT("", node, false, value);
+}
 
 
 static PyObject * tree_build(PyObject * self,PyObject *args){

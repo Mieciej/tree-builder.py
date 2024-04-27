@@ -5,12 +5,14 @@
 #include <vector>
 #include "tree.h"
 
-void expand_tree(Branch * b);
+extern "C" void expand_tree(Branch<long,long> * b);
 
-void printBT(const Branch* node, long value);
+extern "C" void printBT(const Branch<long,long>* node, long value);
+extern "C" void print_tree_helper(const std::string& prefix, const Branch<long,long>* node, bool not_last, long value);
 extern "C" int build_branch(PyObject *list, bitmask_t* rows,
                  Py_ssize_t n_rows, Py_ssize_t n_columns ) {
-    std::vector<Attribute*> * attributes = new std::vector<Attribute*>();
+    std::vector<Attribute<long,long>*> * attributes
+        = new std::vector<Attribute<long,long>*>();
     PyObject *item, *number, *target;
 
     long *classes = new long [n_rows];
@@ -33,7 +35,7 @@ extern "C" int build_branch(PyObject *list, bitmask_t* rows,
                 attributes->at(j)->values->push_back(pair);
                 continue;
             }
-            Attribute* new_attribute = new Attribute(n_rows,j);
+            Attribute<long,long>* new_attribute = new Attribute<long,long>(n_rows,j);
 
             new_attribute->values->push_back(pair);
             attributes->push_back(new_attribute);
@@ -42,15 +44,15 @@ extern "C" int build_branch(PyObject *list, bitmask_t* rows,
     bitmask_t n[1];
     n[0] = ~0;
     std::cout << "INFO: Finished reading features." <<std::endl;
-    Branch root(n_rows, *attributes, n, classes);
+    Branch<long,long> root(n_rows, *attributes, n, classes);
     expand_tree(&root);
     std::cout << "INFO: Finished constructing tree. "<<std::endl;
     printBT(&root, 0);
     return 0;
 }
 
-void expand_tree(Branch * b){
-    Branch *curr = b;
+extern "C" void expand_tree(Branch<long,long> * b){
+    Branch<long,long> *curr = b;
     if (!(curr->split())){
         for(auto child : *curr->children){
             expand_tree(child.second);
@@ -60,7 +62,7 @@ void expand_tree(Branch * b){
         return;
     }
 }
-void printBT(const std::string& prefix, const Branch* node, bool not_last, long value)
+extern "C" void print_tree_helper(const std::string& prefix, const Branch<long,long>* node, bool not_last, long value)
 {
     if (node != nullptr)
     {
@@ -78,15 +80,15 @@ void printBT(const std::string& prefix, const Branch* node, bool not_last, long 
         for (auto c: *node->children)
         {
             bool nl =  i != node->children->size()-1;
-            printBT(prefix + (not_last ? "│    " : "     "), c.second,nl , c.first);
+            print_tree_helper(prefix + (not_last ? "│    " : "     "), c.second,nl , c.first);
             ++i;
         }
     }
 }
 
-void printBT(const Branch* node, long value)
+extern "C" void printBT(const Branch<long,long>* node, long value)
 {
-    printBT("", node, false, value);
+    print_tree_helper("", node, false, value);
 }
 
 
@@ -125,7 +127,7 @@ static struct PyModuleDef treebuildermodule = {
                  or -1 if the module keeps state in global variables. */
     TreeBuilderMethods
 };
-PyMODINIT_FUNC PyInit_tree_builder(void){
+extern "C" PyMODINIT_FUNC PyInit_tree_builder(void){
     return PyModule_Create(&treebuildermodule);
 }
 

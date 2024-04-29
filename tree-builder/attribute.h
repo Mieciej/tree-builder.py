@@ -13,6 +13,7 @@ public:
   std::vector<std::pair<long,long>*> *values;
   float get_entropy(bitmask_t * chosen_rows);
   long label;
+  ~Attribute();
 };
 
 #endif 

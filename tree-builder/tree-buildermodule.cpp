@@ -91,7 +91,7 @@ extern "C" int build_branch(PyObject *list,
     parse_attributes(list, n_rows, n_columns,
                      attributes, dictionary,
                      classes);
-    bitmask_t n[n_rows/sizeof(bitmask_t)+1];
+    bitmask_t *n  =new bitmask_t [n_rows/sizeof(bitmask_t)+1];
     for (size_t i = 0; i<n_rows/sizeof(bitmask_t)+1; i++){
         n[i] = ~0;
     }
@@ -99,7 +99,15 @@ extern "C" int build_branch(PyObject *list,
     expand_tree(&root);
     std::cout << "INFO: Finished constructing a tree. "<<std::endl;
     printBT(&root, 0, *dictionary);
+
+    for(auto a: *attributes){
+        delete(a);
+    }
+    delete(attributes);
+    delete(classes);
+    delete(dictionary);
     return 0;
+
 }
 
 extern "C" void expand_tree(Branch * b){

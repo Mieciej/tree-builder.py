@@ -9,6 +9,7 @@ Branch::Branch(size_t n_rows, std::vector<Attribute*> attributes,
                bitmask_t *selected_rows, long * classes) 
     : n_classes(n_rows),attributes(attributes),
     classes(classes), selected_rows(selected_rows) {
+    children  = nullptr;
     std::unordered_map<long, size_t> counter;
     size_t top_size=0;
     if (attributes.size() == 0){
@@ -141,4 +142,19 @@ Branch::split(){
     }
     return 0;
 };
+
+
+Branch::~Branch(){
+    
+    if(children!=nullptr){
+        for(auto c : *children){
+            delete(c.second);
+        }
+        delete(children);
+
+    } 
+    delete(selected_rows);
+
+
+}
 

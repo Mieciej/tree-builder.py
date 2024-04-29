@@ -62,3 +62,9 @@ Attribute::get_entropy(bitmask_t * chosen_rows){
     return ret;
 
 }
+Attribute::~Attribute(){
+    for(auto c : *values){
+        delete(c);
+    }
+    delete(values);
+}

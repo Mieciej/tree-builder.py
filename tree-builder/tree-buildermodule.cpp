@@ -11,7 +11,9 @@ extern "C" void expand_tree(Branch* b);
 extern "C" void printBT(const Branch* node, long value,
                         std::unordered_map<long, std::string> &dictionary);
 extern "C" void print_tree_helper(const std::string& prefix, const Branch* node,
-                                  bool not_last, long value,std::unordered_map<long, std::string> &dictionary);
+                                  bool not_last, long value,
+                                  std::unordered_map<long, std::string> &dictionary,
+                                  bool first);
 int parse_value(PyObject * value, std::string& result){
 
     PyObject* str = PyObject_Str(value);
@@ -36,7 +38,7 @@ int parse_attributes(PyObject *list, Py_ssize_t n_rows,
                      std::unordered_map<long, std::string> * &dictionary,
                      long * &classes){
 
-     attributes = new std::vector<Attribute*>();
+    attributes = new std::vector<Attribute*>();
     PyObject *item, *value, *target;
     std::unordered_map<std::string,long> encoding; 
     dictionary = new std::unordered_map<long, std::string>;
@@ -111,14 +113,20 @@ extern "C" void expand_tree(Branch * b){
         return;
     }
 }
-extern "C" void print_tree_helper(const std::string& prefix, const Branch* node, bool not_last, long value,std::unordered_map<long,std::string> &dictionary)
+extern "C" void print_tree_helper(const std::string& prefix, const Branch* node,
+                                  bool not_last,
+                                  long value,std::unordered_map<long,std::string> &dictionary,
+                                  bool first)
 {
     if (node != nullptr)
     {
         std::cout << prefix;
 
         std::cout << (not_last ? "├": "└");
-        std::cout << dictionary[value] <<"──";
+        std::string print_value;
+        if(!first) print_value= dictionary[value];
+        else print_value="─";
+        std::cout << print_value <<"──";
         if(!node->is_leaf) {
             std::cout << node->split_attribute->label << std::endl;
         } else {
@@ -129,7 +137,11 @@ extern "C" void print_tree_helper(const std::string& prefix, const Branch* node,
         for (auto c: *node->children)
         {
             bool nl =  i != node->children->size()-1;
-            print_tree_helper(prefix + (not_last ? "│    " : "     "), c.second,nl , c.first,dictionary);
+            std::string bonus = "";
+            for (size_t i = 0; i<print_value.size()-1; i++) {
+                bonus+=" ";
+            }
+            print_tree_helper(prefix + (not_last ? "│    " : "     ") + bonus,  c.second,nl , c.first,dictionary, false);
             ++i;
         }
     }
@@ -137,7 +149,7 @@ extern "C" void print_tree_helper(const std::string& prefix, const Branch* node,
 
 extern "C" void printBT(const Branch* node, long value, std::unordered_map<long,std::string> &dictionary)
 {
-    print_tree_helper("", node, false, value, dictionary);
+    print_tree_helper("", node, false, value, dictionary,true);
 }
 
 

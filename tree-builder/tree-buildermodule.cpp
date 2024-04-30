@@ -5,20 +5,14 @@
 #include <vector>
 #include "tree.h"
 #include <unordered_map>
+#include "utils.h"
 
-extern "C" void expand_tree(Branch* b);
-
-extern "C" void printBT(const Branch* node, long value,
-                        std::unordered_map<long, std::string> &dictionary);
-extern "C" void print_tree_helper(const std::string& prefix, const Branch* node,
-                                  bool not_last, long value,
-                                  std::unordered_map<long, std::string> &dictionary,
-                                  bool first);
 int parse_value(PyObject * value, std::string& result){
 
     PyObject* str = PyObject_Str(value);
     const char* bytes = PyUnicode_AsUTF8(str);
     result =std::string(bytes);
+    Py_DECREF(str);
     return 0;
 }
 int encode_value(std::string key_value, 
@@ -98,7 +92,7 @@ extern "C" int build_branch(PyObject *list,
     Branch root(n_rows, *attributes, n, classes);
     expand_tree(&root);
     std::cout << "INFO: Finished constructing a tree. "<<std::endl;
-    printBT(&root, 0, *dictionary);
+    print_tree(&root, 0, *dictionary);
 
     for(auto a: *attributes){
         delete(a);
@@ -108,56 +102,6 @@ extern "C" int build_branch(PyObject *list,
     delete(dictionary);
     return 0;
 
-}
-
-extern "C" void expand_tree(Branch * b){
-    Branch *curr = b;
-    if (!(curr->split())){
-        for(auto child : *curr->children){
-            expand_tree(child.second);
-        }
-    }
-    if(curr->is_leaf){
-        return;
-    }
-}
-extern "C" void print_tree_helper(const std::string& prefix, const Branch* node,
-                                  bool not_last,
-                                  long value,std::unordered_map<long,std::string> &dictionary,
-                                  bool first)
-{
-    if (node != nullptr)
-    {
-        std::cout << prefix;
-
-        std::cout << (not_last ? "├": "└");
-        std::string print_value;
-        if(!first) print_value= dictionary[value];
-        else print_value="─";
-        std::cout << print_value <<"──";
-        if(!node->is_leaf) {
-            std::cout << node->split_attribute->label << std::endl;
-        } else {
-            std::cout << dictionary[node->decision]<<std::endl;
-            return;
-        }
-        size_t i =0;
-        for (auto c: *node->children)
-        {
-            bool nl =  i != node->children->size()-1;
-            std::string bonus = "";
-            for (size_t i = 0; i<print_value.size()-1; i++) {
-                bonus+=" ";
-            }
-            print_tree_helper(prefix + (not_last ? "│    " : "     ") + bonus,  c.second,nl , c.first,dictionary, false);
-            ++i;
-        }
-    }
-}
-
-extern "C" void printBT(const Branch* node, long value, std::unordered_map<long,std::string> &dictionary)
-{
-    print_tree_helper("", node, false, value, dictionary,true);
 }
 
 
@@ -178,7 +122,8 @@ static PyObject * tree_build(PyObject * self,PyObject *args){
         return NULL;
     }
     build_branch(list,n,l);
-    return PyLong_FromLong(0);
+    PyObject* ret = Py_BuildValue("i",0);
+    return ret;
 }
 
 

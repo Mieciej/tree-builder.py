@@ -143,6 +143,17 @@ Branch::split(){
     return 0;
 };
 
+void expand_tree(Branch* b){
+    Branch *curr = b;
+    if (!(curr->split())){
+        for(auto child : *curr->children){
+            expand_tree(child.second);
+        }
+    }
+    if(curr->is_leaf){
+        return;
+    }
+}
 
 Branch::~Branch(){
     

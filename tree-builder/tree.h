@@ -20,5 +20,5 @@ private:
     long *classes;
     bitmask_t* selected_rows;
 };
-
+void expand_tree(Branch* b);
 #endif

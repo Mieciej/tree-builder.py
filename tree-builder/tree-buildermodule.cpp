@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include "utils.h"
 
+extern "C" PyObject *  create_tree_dictionary(Branch &root, std::unordered_map<long, std::string> &dictionary);
 int parse_value(PyObject * value, std::string& result){
 
     PyObject* str = PyObject_Str(value);
@@ -77,7 +78,7 @@ int parse_attributes(PyObject *list, Py_ssize_t n_rows,
     return 0;
 }
 
-extern "C" int build_branch(PyObject *list, 
+extern "C" PyObject * build_branch(PyObject *list, 
                  Py_ssize_t n_rows, Py_ssize_t n_columns ) {
     std::vector<Attribute*> * attributes;
     long * classes;
@@ -93,19 +94,40 @@ extern "C" int build_branch(PyObject *list,
     expand_tree(&root);
     std::cout << "INFO: Finished constructing a tree. "<<std::endl;
     print_tree(&root, 0, *dictionary);
-
+    PyObject* dict = create_tree_dictionary(root, *dictionary);
     for(auto a: *attributes){
         delete(a);
     }
     delete(attributes);
     delete(classes);
     delete(dictionary);
-    return 0;
+    return dict;
 
 }
 
+extern "C" PyObject *  create_tree_dictionary(Branch &root, std::unordered_map<long, std::string> &dictionary){
+    PyObject *branch_dict;
+    if (!root.is_leaf) {
+        branch_dict = PyDict_New();
+        PyObject *key_attribute = PyLong_FromLong(root.split_attribute->label);
+        PyObject *value_dict = PyDict_New();
+        for (auto value : *root.children){
+            PyObject * key_value = PyUnicode_FromString(dictionary[value.first].c_str());
+            PyObject * child_dict = create_tree_dictionary(*value.second, dictionary);
+            PyDict_SetItem(value_dict, key_value, child_dict);
+            Py_DECREF(key_value);
+            Py_DECREF(child_dict);
+        }
+        PyDict_SetItem(branch_dict, key_attribute, value_dict);
+        Py_DECREF(value_dict);
+        Py_DECREF(key_attribute);
+    } else {
+        branch_dict = PyLong_FromLong(root.decision);
+    }
+    return branch_dict;
+}
 
-static PyObject * tree_build(PyObject * self,PyObject *args){
+extern "C" PyObject * tree_build(PyObject * self,PyObject *args){
     PyObject * list, *item;
     if (!PyArg_ParseTuple(args, "O", &list)) {
         return NULL;
@@ -121,8 +143,7 @@ static PyObject * tree_build(PyObject * self,PyObject *args){
     if( l < 0) {
         return NULL;
     }
-    build_branch(list,n,l);
-    PyObject* ret = Py_BuildValue("i",0);
+    PyObject* ret = build_branch(list,n,l);
     return ret;
 }
 
